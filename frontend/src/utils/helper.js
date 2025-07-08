@@ -6,12 +6,10 @@ export const validateEmail = (email) => {
 export const getInitials = (title) => {
   if (!title) return "";
 
-  const words = title.split(" ");
+  const words = title.split(" ").filter(Boolean);
   let initials = "";
 
-  for (let i = 0; i < Math.min(words.length, 2); i++) {
-    initials += words[i][0];
-  }
+  initials = words.slice(0, 2).map(word => word[0]).join("");
 
   return initials.toUpperCase();
 };

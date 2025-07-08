@@ -29,10 +29,6 @@ const Input = ({ value, onChange, label, placeholder, type }) => {
             {showPassword ? <FaRegEye size={18} /> : <FaRegEyeSlash size={18} />}
           </div>
         )}
-
-        
-
-
       </div>
     </div>
   );

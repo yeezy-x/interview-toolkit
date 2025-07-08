@@ -1,19 +1,29 @@
-const { GoogleGenAI } = require("@google/genai");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { questionAnswerPrompt, conceptExplainPrompt } = require("../utils/prompts");
+require("dotenv").config();
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// Initialize Gemini with API key
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Utility function to extract and parse JSON safely
+// Utility: Extract and parse raw JSON output
 const extractJSON = async (response) => {
   const rawText = await response.text();
-  const cleaned = rawText
-    .replace(/^\s*```json\s*/, "")
-    .replace(/\s*```\s*$/, "")
-    .trim();
-  return JSON.parse(cleaned);
+
+  try {
+    const cleaned = rawText
+      .replace(/^\s*```json\s*/, "")
+      .replace(/\s*```\s*$/, "")
+      .trim();
+
+    return JSON.parse(cleaned);
+  } catch (err) {
+    console.error("❌ JSON Parse Error:", err.message);
+    console.log("↪ Raw Output:", rawText);
+    throw new Error("Failed to parse AI response as JSON");
+  }
 };
 
-// Generate Interview Q&A
+// POST: /api/ai/generate-questions
 const generateInterviewQuestions = async (req, res) => {
   try {
     const { role, experience, topicsToFocus, numberOfQuestions } = req.body;
@@ -23,9 +33,9 @@ const generateInterviewQuestions = async (req, res) => {
     }
 
     const prompt = questionAnswerPrompt(role, experience, topicsToFocus, numberOfQuestions);
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // or gemini-1.5-pro
     const result = await model.generateContent(prompt);
-    const response = await result.response;
+    const response = result.response;
 
     const data = await extractJSON(response);
     res.status(200).json(data);
@@ -37,7 +47,7 @@ const generateInterviewQuestions = async (req, res) => {
   }
 };
 
-// Generate Concept Explanation
+// POST: /api/ai/generate-explanation
 const generateConceptExplanation = async (req, res) => {
   try {
     const { question } = req.body;
@@ -47,9 +57,9 @@ const generateConceptExplanation = async (req, res) => {
     }
 
     const prompt = conceptExplainPrompt(question);
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const result = await model.generateContent(prompt);
-    const response = await result.response;
+    const response = result.response;
 
     const data = await extractJSON(response);
     res.status(200).json(data);

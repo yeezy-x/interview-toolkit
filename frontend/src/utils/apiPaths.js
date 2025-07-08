@@ -7,7 +7,7 @@ export const API_PATHS = {
     GET_PROFILE: "/api/auth/profile", // Get logged-in user details
   },
   IMAGE: {
-    UPLOAD_IMAGE: "/api/api/upload-image", // Upload profile picture
+    UPLOAD_IMAGE: "/api/auth/upload-image", // Upload profile picture
   },
   AI: {
     GENERATE_QUESTIONS: "/api/ai/generate-questions", // Generate interview questions and answers using Gemini

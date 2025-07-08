@@ -9,81 +9,79 @@ import { API_PATHS } from '../../utils/apiPaths';
 import uploadImage from '../../utils/uploadImage';
 
 const SignUp = ({ setCurrentPage }) => {
-  const [profilePic,setProfilePic]=useState(null)
-  const [fullName,setFullName]=useState('')
+  const [profilePic, setProfilePic] = useState(null);
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const [error,setError]=useState(null)
-
-  const {updateUser}=useContext(UserContext);
-  const navigate=useNavigate()
+  const { updateUser } = useContext(UserContext);
+  const navigate = useNavigate();
 
   const handleSignup = async (e) => {
     e.preventDefault();
 
-    let profileImageUrl = "";
+    let profileImageUrl = '';
 
-    // Full name check
+    // Validation
     if (!fullName.trim()) {
-      setError("Please enter your full name.");
+      setError('Please enter your full name.');
       return;
     }
 
-    // Email check
     if (!validateEmail(email)) {
-      setError("Please enter a valid email address.");
-      return; // 🔴 missing return here in your code
+      setError('Please enter a valid email address.');
+      return;
     }
 
-    // Password check
-    if (!password) {
-      setError("Please enter the password.");
-      return; // 🔴 missing return here too
+    if (!password || password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
     }
 
-    // Clear error only if all validations pass
-    setError("");
+    setError(null);
+    setLoading(true);
 
-    // SignUp API Call
-  try {
-    // Upload image if present
-    if (profilePic) {
-      const imgUploadRes = await uploadImage(profilePic);
-      profileImageUrl = imgUploadRes.imageUrl || "";
-    }
-
-    const response = await axiosInstance.post(API_PATHS.AUTH.REGISTER, {
-      name: fullName,
-      email,
-      password,
-      profileImageUrl,
-    });
-
-    const { token } = response.data;
-
-    if (token) {
-      localStorage.setItem("token", token);
-      updateUser(response.data);
-      navigate("/dashboard");
-    }
-  } catch (error) {
-      if (error.message && error.response?.data?.message) {
-        setError(error.response.data.message);
-      } else {
-        setError("Something went wrong. Please try again.");
+    try {
+      // Upload profile image if selected
+      if (profilePic) {
+        const imgUploadRes = await uploadImage(profilePic);
+        profileImageUrl = imgUploadRes.imageUrl || '';
       }
+
+      const { data } = await axiosInstance.post(API_PATHS.AUTH.REGISTER, {
+        name: fullName,
+        email,
+        password,
+        profileImageUrl,
+      });
+
+      const { token } = data;
+
+      if (token) {
+        localStorage.setItem('token', token);
+        updateUser(data);
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Something went wrong. Please try again.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="w-[90vw] md:w-[33vw] p-7 flex flex-col justify-center">
+    <div className="w-full p-5 flex flex-col justify-center max-h-full">
       <h3 className="text-lg font-semibold text-black">Create an Account</h3>
       <p className="text-xs text-slate-700 mt-[5px] mb-6">Please enter your details to sign up</p>
 
       <form onSubmit={handleSignup}>
-
-        <ProfilePhoto image={profilePic} setImage={setProfilePic}/>
+        <ProfilePhoto image={profilePic} setImage={setProfilePic} />
 
         <Input
           value={fullName}
@@ -109,13 +107,24 @@ const SignUp = ({ setCurrentPage }) => {
           type="password"
         />
 
-        {error && <p className='text-red-500 text-xs pb-2.5'>{error}</p>}
+        {error && (
+          <p className="text-red-500 text-xs pb-2.5">
+            {typeof error === 'string' ? error : 'An unexpected error occurred.'}
+          </p>
+        )}
 
-        <button type="submit" className="btn-primary">SIGN UP</button>
+        <button
+          type="submit"
+          className="btn-primary"
+          disabled={loading}
+        >
+          {loading ? 'Signing up...' : 'SIGN UP'}
+        </button>
 
         <p className="text-[13px] text-slate-800 mt-3">
           Already have an account?{' '}
           <button
+            type="button"
             className="font-medium text-primary underline cursor-pointer"
             onClick={() => setCurrentPage('login')}
           >
